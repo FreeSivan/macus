@@ -4,22 +4,23 @@
 namespace ys {
 
 struct positMeta {
-    int docId;
-    int orgId;
-    long offset;
+    int docId;                // document id
+    int orgId;                // origin id
+    long offset;              // the offset in positData
+    int length;               // the length of this file
 };
 
 struct indexData {
-    int docId;
-    int offset;
+    int docId;                // document id
+    int offset;               // the offset in origin file
 };
 
 struct indexMeta {
-    int offset;
-    int length;
+    int offset;               // the offset in indexData
+    int length;               // the number of index
 };
 
-typedef char positData;
+typedef char positData;       // posit data unit type
 
 class build {
 public:
