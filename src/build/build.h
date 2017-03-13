@@ -3,6 +3,14 @@
 
 namespace ys {
 
+#define MAXLEN (1024*1024)
+
+struct indexData {
+    int key;                  // sub finger
+    int docId;                // document id
+    int offset;               // the offset in origin file
+};
+
 struct positMeta {
     int docId;                // document id
     int orgId;                // origin id
@@ -10,26 +18,21 @@ struct positMeta {
     int length;               // the length of this file
 };
 
-struct indexData {
-    int docId;                // document id
-    int offset;               // the offset in origin file
-};
-
-struct indexMeta {
-    int offset;               // the offset in indexData
-    int length;               // the number of index
-};
-
 typedef char positData;       // posit data unit type
 
 class build {
 public:
-    build();
-    virtual ~build();
+    typedef unsigned int uint32_t;
+public:
+    build(){ docIndex = 0 };
+    virtual ~build() {};
 public:
     virtual void addDoc(char* buf, int len, int orgId) = 0;
 protected:
     int docIndex;
+protected:
+    uint32_t gen_key(uint32_t v);
+    uint32_t gen_key2(uint32_t x, uint32_t y);
 private:
     build(const build&);
     build& operator=(const build&);
@@ -37,8 +40,8 @@ private:
 
 class singleBuild : public build {
 public:
-    singleBuild();
-    ~singleBuild();
+    singleBuild() {};
+    ~singleBuild() {};
 public:
     virtual void addDoc(char* buf, int len, int orgId);
 private:
