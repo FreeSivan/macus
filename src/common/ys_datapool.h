@@ -17,6 +17,7 @@ public:
     void push_back(T *val, int size);
     T& operator[](long index);
     long getCurLen() const;
+    void sort();
 private:
     T** data;                                   
     long curLen;                   
@@ -27,6 +28,8 @@ private:
     dataPool& operator=(const dataPool&);
     void judgeSize();
     void resize();
+    void sort(long left, long right);
+    long partition(long left, long right);
 };
 
 template <typename T>
@@ -121,6 +124,38 @@ template <typename T>
 inline long dataPool<T>::getCurLen() const{
     return curLen;
 }
+
+template <typename T>
+inline void dataPool<T>::sort() {
+    sort(0, curLen-1);
+}
+
+template <typename T>
+inline void dataPool<T>::sort(long left, long right) {
+    if (left >= right) {
+        return;
+    }
+    int pos = partition(left, right);
+    sort(left, pos-1);
+    sort(pos+1, right);
+}
+
+template <typename T>
+inline long dataPool<T>::partition(long left, long right) {
+    int i, j = left;
+    for (i = left; i < right; ++i) {
+        if ((*this)[i] < (*this)[right]){
+            T tmp = (*this)[i];
+            (*this)[i] = (*this)[j];
+            (*this)[j++] = tmp;
+        }
+    }
+    T tmp = (*this)[right];
+    (*this)[right] = (*this)[j];
+    (*this)[j] = tmp;
+    return j;
+}
+
 }
 
 #endif
