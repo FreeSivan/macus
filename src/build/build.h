@@ -1,14 +1,18 @@
 #ifndef _BUILD_H_
 #define _BUILD_H_
+#include "../common/ys_datapool.h"
 
 namespace ys {
 
-#define MAXLEN (1024*1024)
+#define MAXLEN (30*1024*1024)
 
 struct indexData {
     int key;                  // sub finger
     int docId;                // document id
     int offset;               // the offset in origin file
+    bool operator<(const indexData& v) {
+        return key < v.key;
+    }
 };
 
 struct positMeta {
@@ -22,17 +26,16 @@ typedef char positData;       // posit data unit type
 
 class build {
 public:
-    typedef unsigned int uint32_t;
-public:
-    build(){ docIndex = 0 };
+    build(){ docIndex = 0; fIndex = 0; };
     virtual ~build() {};
 public:
     virtual void addDoc(char* buf, int len, int orgId) = 0;
 protected:
     int docIndex;
+    int fIndex;
 protected:
-    uint32_t gen_key(uint32_t v);
-    uint32_t gen_key2(uint32_t x, uint32_t y);
+    unsigned gen_key(unsigned v);
+    unsigned gen_key2(unsigned x, unsigned y);
 private:
     build(const build&);
     build& operator=(const build&);
@@ -45,9 +48,13 @@ public:
 public:
     virtual void addDoc(char* buf, int len, int orgId);
 private:
-    void writeIndex(dataPool<indexData> iDataPool);
-    void writePMeta(dataPool<positMeta> pMetaPool);
-    void writePData(dataPool<positData> pDataPool);
+    void writeIndexData();
+    void writePositMeta();
+    void writePositData();
+private:
+    dataPool<indexData> iDataPool;
+    dataPool<positMeta> pMetaPool;
+    dataPool<positData> pDataPool;
 };
 
 class mutilBuild : public build {
