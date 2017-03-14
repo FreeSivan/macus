@@ -18,6 +18,7 @@ public:
     T& operator[](long index);
     long getCurLen() const;
     void sort();
+    void reset();
 private:
     T** data;                                   
     long curLen;                   
@@ -60,6 +61,19 @@ inline dataPool<T>::~dataPool() {
         delete[] data[i];
     }
     delete[] data;
+}
+
+template <typename T>
+inline void dataPool<T>::reset() {
+    for (int i = 0; i < bunchSize; ++i) {
+        delete[] data[i];
+    }
+    delete[] data;
+    curLen = 0;
+    data = new T*[bunchSize];
+    for (int i = 0; i < bunchSize; ++i) {
+        data[i] = 0;
+    }
 }
 
 template <typename T>
