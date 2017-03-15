@@ -119,9 +119,11 @@ using namespace ys;
 #include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 void help() {
     printf ("usage :\n\t-a:afpPath\n\t-b:buildPath\n");
 }
+
 int main(int argc, char **argv) {
     char *afpPath = 0;
     char *buildPath = 0;
@@ -173,3 +175,4 @@ int main(int argc, char **argv) {
     builder.writeFlush();
     return 0; 
 }
+
