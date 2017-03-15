@@ -2,7 +2,6 @@
 #include "../common/ys_datapool.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 
 namespace ys {
 
@@ -25,10 +24,8 @@ unsigned build::gen_key2(unsigned x, unsigned y) {
 }
 
 void singleBuild::addDoc(char* buf, int len, int orgId) {
-    printf ("2\n");
     int docId = docIndex++;
     for (int i = 0; i < len; i += 4) {
-        // create indexMeta
         unsigned int k = *((unsigned int*)(buf+i));
         if (!(k & 1)) {
             continue;
@@ -120,15 +117,41 @@ void singleBuild::writeFlush() {
 using namespace ys;
 
 #include <dirent.h>
+#include <stdlib.h>
+#include <unistd.h>
+void help() {
+    printf ("usage :\n\t-a:afpPath\n\t-b:buildPath\n");
+}
+int main(int argc, char **argv) {
+    char *afpPath = 0;
+    char *buildPath = 0;
+    int ch = -1;
 
-
-int main(int argc, char ** argv) {
-    singleBuild builder("/home/xiwen.yxw/index");
-    printf ("0.2\n");
+    while (-1 != (ch=getopt(argc, argv, "a:b:"))) {
+        switch(ch) {
+        case 'a': {
+            afpPath = optarg;
+            break;
+        }
+        case 'b': {
+            buildPath = optarg;
+            break;
+        }
+        default: {
+            help();
+            break;
+        }
+        }
+    }
+    if (!afpPath || !buildPath) {
+        help();
+        return -1;
+    }
+    singleBuild builder(buildPath);
     DIR *dp;
     struct dirent *dirp;
     char fileName[256];
-    if (!(dp = opendir("/home/xiwen.yxw/afp/"))) {
+    if (!(dp = opendir(afpPath))) {
         return -1;
     }
     while (dirp = readdir(dp)) {
@@ -136,7 +159,7 @@ int main(int argc, char ** argv) {
             !strcmp("..", dirp->d_name)) {
             continue;
         }
-        sprintf (fileName, "%s/%s", "/home/xiwen.yxw/afp/", dirp->d_name);
+        sprintf (fileName, "%s/%s", afpPath, dirp->d_name);
         FILE *file = fopen(fileName, "r");
         fseek(file, 0, SEEK_END);
         int len = ftell(file);
@@ -148,6 +171,5 @@ int main(int argc, char ** argv) {
         delete content;
     }
     builder.writeFlush();
-
-    return 0;
+    return 0; 
 }
