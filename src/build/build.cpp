@@ -6,6 +6,16 @@
 
 namespace ys {
 
+build::build(char* buildPath) {
+    path = buildPath;
+    docIndex = 0;
+    fIndex = 0;
+}
+
+singleBuild::singleBuild(char* buildPath)
+    : build(buildPath) {
+}
+
 unsigned build::gen_key(unsigned v) {
     return v >> 1;
 }
@@ -17,91 +27,92 @@ unsigned build::gen_key2(unsigned x, unsigned y) {
 void singleBuild::addDoc(char* buf, int len, int orgId) {
     printf ("2\n");
     int docId = docIndex++;
-    printf ("orgid = %d docId = %d len = %d\n", orgId, docIndex, len);
     for (int i = 0; i < len; i += 4) {
         // create indexMeta
         unsigned int k = *((unsigned int*)(buf+i));
-        if (k & 1 == 0) {
+        if (!(k & 1)) {
             continue;
         }
         indexData iData;
         iData.key = gen_key(*((int*)(buf+i)));
         iData.docId = docId;
         iData.offset = i;
-        iDataPool.push_back(iData);
+        iPool.push_back(iData);
     }
-    // create positMeta
     positMeta pMeta;
     pMeta.docId = docId;
     pMeta.orgId = orgId;
-    pMeta.offset = pDataPool.getCurLen();
+    pMeta.offset = pDPool.getCurLen();
     pMeta.length = len;
-    pMetaPool.push_back(pMeta);
-    // create positData
-    pDataPool.push_back(buf, len);
-    if (pDataPool.getCurLen() > MAXLEN) {
+    pMPool.push_back(pMeta);
+    pDPool.push_back(buf, len);
+    if (pDPool.getCurLen() > MAXLEN) {
         writeIndexData();
         writePositMeta();
         writePositData();
-        iDataPool.reset();
-        pMetaPool.reset();
-        pDataPool.reset();
         fIndex++;
     }
 }
 
 void singleBuild::writeIndexData() {
     char filename[128] = {0};
-    sprintf (filename, "/home/xiwen.yxw/index/%d.in", fIndex);
+    sprintf (filename, "%s/%d.in", path, fIndex);
     FILE* file1 = fopen(filename, "wb");
-    sprintf (filename, "/home/xiwen.yxw/index/%d.iv", fIndex);
+    sprintf (filename, "%s/%d.iv", path, fIndex);
     FILE* file2 = fopen(filename, "wb");
-    iDataPool.sort();
-    int curkey = iDataPool[0].key;
+    iPool.sort();
+    int curkey = iPool[0].key;
     int curoffset = 0;
     int curlength = 0;
-    for (int i = 0; i < iDataPool.getCurLen(); ++i) {
-        // key|offset|length
-        if (iDataPool[i].key != curkey) {
-            fwrite(&iDataPool[i].key, sizeof(int), 1, file1);
+    for (int i = 0; i < iPool.getCurLen(); ++i) {
+        if (iPool[i].key != curkey) {
+            fwrite(&iPool[i].key, sizeof(int), 1, file1);
             fwrite(&curoffset, sizeof(long), 1, file1);
             fwrite(&curlength, sizeof(int), 1, file1);
             curoffset += curlength;
             curlength = 0;
-            curkey = iDataPool[i].key;
+            curkey = iPool[i].key;
         }
-        // docId|offset
-        fwrite(&iDataPool[i].docId, sizeof(int), 1, file2);
-        fwrite(&iDataPool[i].offset, sizeof(long), 1, file2);
+        fwrite(&iPool[i].docId, sizeof(int), 1, file2);
+        fwrite(&iPool[i].offset, sizeof(long), 1, file2);
         curlength ++;
     }
+    iPool.reset();
     fclose(file1);
     fclose(file2);
 }
 
 void singleBuild::writePositMeta() {
     char filename[128] = {0};
-    sprintf (filename, "/home/xiwen.yxw/index/%d.po", fIndex);
+    sprintf (filename, "%s/%d.po", path, fIndex);
     FILE* file = fopen(filename, "wb");
-    for (int i = 0; i < pMetaPool.getCurLen(); ++i) {
-        // docId|orgid|offset|length
-        fwrite(&pMetaPool[i].docId, sizeof(int), 1, file);
-        fwrite(&pMetaPool[i].orgId, sizeof(int), 1, file);
-        fwrite(&pMetaPool[i].offset, sizeof(long), 1, file);
-        fwrite(&pMetaPool[i].length, sizeof(int), 1, file);
+    for (int i = 0; i < pMPool.getCurLen(); ++i) {
+        fwrite(&pMPool[i].docId, sizeof(int), 1, file);
+        fwrite(&pMPool[i].orgId, sizeof(int), 1, file);
+        fwrite(&pMPool[i].offset, sizeof(long), 1, file);
+        fwrite(&pMPool[i].length, sizeof(int), 1, file);
     }
+    pMPool.reset();
     fclose(file);
 }
 
 
 void singleBuild::writePositData() {
     char filename[128] = {0};
-    sprintf (filename, "/home/xiwen.yxw/index/%d.pv", fIndex);
+    sprintf (filename, "%s/%d.pv", path, fIndex);
     FILE* file = fopen(filename, "wb");
-    for (int i = 0; i < pDataPool.getCurLen(); ++i) {
-        fwrite(&pDataPool[i], sizeof(positData), 1, file);
+    for (int i = 0; i < pDPool.getCurLen(); ++i) {
+        fwrite(&pDPool[i], sizeof(positData), 1, file);
     }
+    pDPool.reset();
     fclose(file);
+}
+
+void singleBuild::writeFlush() {
+    writeIndexData();
+    writePositMeta();
+    writePositData();
+    fIndex++;
 }
 
 }
@@ -112,8 +123,7 @@ using namespace ys;
 
 
 int main(int argc, char ** argv) {
-    printf ("0.1\n");
-    singleBuild builder;
+    singleBuild builder("/home/xiwen.yxw/index");
     printf ("0.2\n");
     DIR *dp;
     struct dirent *dirp;
@@ -137,6 +147,7 @@ int main(int argc, char ** argv) {
         builder.addDoc(content, len, orgid);
         delete content;
     }
+    builder.writeFlush();
 
     return 0;
 }
