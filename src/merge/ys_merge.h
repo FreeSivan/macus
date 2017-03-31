@@ -1,6 +1,8 @@
 #ifndef _MERGE_H_
 #define _MERGE_H_
 
+#include <stdio.h>
+
 namespace ys {
 
 struct mergeMeta {
