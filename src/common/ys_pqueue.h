@@ -22,6 +22,7 @@ public:
     ~baseHeap();
 public:
     bool pop(T& v);
+    bool peek(T& v);
     bool push(const T& v);
     int getCurlength()const;
 protected:
@@ -75,6 +76,14 @@ inline bool baseHeap<T>::pop(T& v) {
     curlength --;
     adjustDown(0);
     return 1;
+}
+
+tmplate <class T>
+inline bool baseHeap<T>::peek(T& v) {
+    if (!curlength) {
+        return 0;
+    }
+    v = data[0];
 }
 
 template <class T>
